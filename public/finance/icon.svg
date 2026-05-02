@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#14532d"/>
+  <circle cx="384" cy="128" r="84" fill="#f7fee7" opacity="0.92"/>
+  <text x="64" y="322" fill="#f7fee7" font-family="Arial, sans-serif" font-size="148" font-weight="800">FI</text>
+</svg>

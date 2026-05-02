@@ -1,0 +1,19 @@
+{
+  "defaultHost": "play.prschdt.xyz",
+  "sites": [
+    {
+      "slug": "zhongwen",
+      "title": "Zhongwen",
+      "description": "A focused Chinese study workspace.",
+      "themeColor": "#155e75",
+      "backgroundColor": "#f8fafc"
+    },
+    {
+      "slug": "finance",
+      "title": "Finance",
+      "description": "A compact personal finance dashboard.",
+      "themeColor": "#14532d",
+      "backgroundColor": "#f7fee7"
+    }
+  ]
+}

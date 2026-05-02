@@ -1,0 +1,33 @@
+{
+  "name": "pwa-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "tsx scripts/generate-pwa-assets.ts",
+    "dev": "vite --host 0.0.0.0",
+    "prebuild": "tsx scripts/generate-pwa-assets.ts",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "check": "pnpm run check:boundaries && pnpm run build",
+    "check:boundaries": "tsx scripts/check-boundaries.ts",
+    "new:pwa": "tsx scripts/create-pwa.ts",
+    "deploy": "pnpm run check && wrangler deploy"
+  },
+  "dependencies": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260424.0",
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "wrangler": "^4.52.0"
+  },
+  "packageManager": "pnpm@10.18.3"
+}

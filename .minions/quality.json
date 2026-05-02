@@ -1,0 +1,4 @@
+[
+  { "name": "route boundaries", "command": "pnpm run check:boundaries" },
+  { "name": "build", "command": "pnpm run build" }
+]

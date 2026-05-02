@@ -1,0 +1,18 @@
+{
+  "name": "Finance",
+  "short_name": "Finance",
+  "description": "A compact personal finance dashboard.",
+  "start_url": "/finance/",
+  "scope": "/finance/",
+  "display": "standalone",
+  "theme_color": "#14532d",
+  "background_color": "#f7fee7",
+  "icons": [
+    {
+      "src": "/finance/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
