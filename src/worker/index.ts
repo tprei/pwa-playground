@@ -3,6 +3,9 @@ import type { SitesConfig } from "../platform/types";
 
 interface Env {
   ASSETS: Fetcher;
+  ANTHROPIC_API_KEY: string;
+  GOOGLE_TTS_API_KEY: string;
+  APP_TOKEN: string;
 }
 
 const config = siteConfig as SitesConfig;
@@ -19,6 +22,14 @@ const siteAssetNames = new Set([
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/generate") {
+      return handleGenerate(request, env);
+    }
+    if (url.pathname === "/api/tts") {
+      return handleTts(request, env);
+    }
+
     const [slug] = url.pathname.split("/").filter(Boolean);
 
     if (url.pathname === "/") {
@@ -79,4 +90,75 @@ function isSiteShellRequest(pathname: string, slug: string): boolean {
   if (localPath === "") return true;
   const lastSegment = localPath.split("/").at(-1) ?? "";
   return !/\.[a-z0-9]+$/i.test(lastSegment);
+}
+
+function authorize(request: Request, env: Env): Response | null {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+  const header = request.headers.get("authorization") ?? "";
+  const expected = `Bearer ${env.APP_TOKEN}`;
+  if (!env.APP_TOKEN || header !== expected) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return null;
+}
+
+async function handleGenerate(request: Request, env: Env): Promise<Response> {
+  const denied = authorize(request, env);
+  if (denied) return denied;
+
+  const body = await request.text();
+  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body,
+  });
+
+  const responseBody = await upstream.text();
+  return new Response(responseBody, {
+    status: upstream.status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+async function handleTts(request: Request, env: Env): Promise<Response> {
+  const denied = authorize(request, env);
+  if (denied) return denied;
+
+  const body = await request.text();
+  const upstream = await fetch(
+    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(env.GOOGLE_TTS_API_KEY)}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    },
+  );
+
+  if (!upstream.ok) {
+    const errorBody = await upstream.text();
+    return new Response(errorBody, {
+      status: upstream.status,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const payload = (await upstream.json()) as { audioContent?: string };
+  if (!payload.audioContent) {
+    return new Response(JSON.stringify({ error: "missing audioContent" }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const audioBytes = Uint8Array.from(atob(payload.audioContent), (c) => c.charCodeAt(0));
+  return new Response(audioBytes, {
+    status: 200,
+    headers: { "content-type": "audio/mpeg" },
+  });
 }
