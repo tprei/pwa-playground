@@ -2,23 +2,9 @@
 // words for a generated sentence. Selection is split into pure inner
 // functions (graph in, decision out) so the ranking logic is testable
 // without loading the reference data.
-//
-// The persistence layer is intentionally absent: the prompt expects it to
-// consume a WordEntry / KnownState model from a sibling domain-types module
-// and a createSiteDatabase factory from src/platform/database.ts, neither of
-// which exists on this branch yet. The locally-declared types below should
-// be replaced with imports once those modules land.
 
 import { loadFrequency, loadHsk } from "../data";
-
-export type KnownState = "unknown" | "want-to-learn" | "learning" | "known";
-
-export interface WordEntry {
-  word: string;
-  state: KnownState;
-}
-
-export type WordStateGraph = ReadonlyMap<string, WordEntry>;
+import type { KnownState, WordStateGraph } from "../domain-types";
 
 export interface PickNextNewWordOptions {
   /** Restrict candidates to a specific HSK level. Omit to allow any word. */
