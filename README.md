@@ -34,28 +34,23 @@ pnpm run check
 
 The script updates `sites.json` and creates `src/apps/timer/entry.tsx`.
 
-## Deploy
+## Deploy through Cloudflare
 
-Log in to Cloudflare once:
-
-```bash
-pnpm wrangler login
-```
-
-Build and deploy:
-
-```bash
-pnpm deploy
-```
-
-The default Worker custom domain is `play.prschdt.xyz`, configured in `wrangler.jsonc`. Change that before deploying if you want a different hostname. Keep `minions.prschdt.xyz` on its existing Cloudflare Tunnel and Zero Trust Access application.
-
-CI checks every pull request. Merges to `main` deploy the Worker and update all PWAs. For GitHub deploys, add repository secrets:
+Connect this GitHub repo in the Cloudflare dashboard:
 
 ```txt
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
+Workers & Pages -> Create application -> Import a repository
+Repository: tprei/pwa-playground
+Production branch: main
+Build command: pnpm install --frozen-lockfile && pnpm run check
+Deploy command: pnpm wrangler deploy
 ```
+
+Cloudflare will deploy on every push to `main`, so merged minion PRs update the live PWAs.
+
+The default Worker custom domain is `play.prschdt.xyz`, configured in `wrangler.jsonc`. Change that before connecting the repo if you want a different hostname. Keep `minions.prschdt.xyz` on its existing Cloudflare Tunnel and Zero Trust Access application.
+
+GitHub Actions still checks every pull request and push with `pnpm run check`. Cloudflare owns production deploys.
 
 ## Bind this repo in minions
 
