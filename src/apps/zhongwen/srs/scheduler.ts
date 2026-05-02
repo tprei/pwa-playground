@@ -11,6 +11,8 @@ export interface Scheduler {
   gradeCard(cardId: string, grade: ReviewGrade, now: number): Promise<Card>;
   createCardsForWord(wordId: string, modes: CardMode[]): Promise<Card[]>;
   suspendCard(cardId: string): Promise<Card>;
+  suspendWord(wordId: string): Promise<Card[]>;
+  unsuspendWord(wordId: string): Promise<Card[]>;
 }
 
 export function createScheduler(site: PlaygroundSite): Scheduler {
@@ -32,6 +34,12 @@ export function createSchedulerWith(database: SiteDatabase, storage: SiteStorage
     },
     suspendCard(cardId) {
       return setSuspended(database, cardId, true);
+    },
+    suspendWord(wordId) {
+      return setWordSuspended(database, wordId, true);
+    },
+    unsuspendWord(wordId) {
+      return setWordSuspended(database, wordId, false);
     },
   };
 }
@@ -145,6 +153,27 @@ async function setSuspended(
     if (!card) throw new Error(`Card ${cardId} not found`);
     const updated: Card = { ...card, suspended };
     await tx.put<Card>(tableNames.cards, updated);
+    return updated;
+  });
+}
+
+async function setWordSuspended(
+  database: SiteDatabase,
+  wordId: string,
+  suspended: boolean,
+): Promise<Card[]> {
+  return database.transaction<Card[]>(tableNames.cards, "readwrite", async (tx) => {
+    const cards = await tx.query<Card>(tableNames.cards, "wordId", wordId);
+    const updated: Card[] = [];
+    for (const card of cards) {
+      if (card.suspended === suspended) {
+        updated.push(card);
+        continue;
+      }
+      const next: Card = { ...card, suspended };
+      await tx.put<Card>(tableNames.cards, next);
+      updated.push(next);
+    }
     return updated;
   });
 }
