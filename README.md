@@ -50,7 +50,7 @@ pnpm deploy
 
 The default Worker custom domain is `play.prschdt.xyz`, configured in `wrangler.jsonc`. Change that before deploying if you want a different hostname. Keep `minions.prschdt.xyz` on its existing Cloudflare Tunnel and Zero Trust Access application.
 
-For GitHub deploys, add repository secrets:
+CI checks every pull request. Merges to `main` deploy the Worker and update all PWAs. For GitHub deploys, add repository secrets:
 
 ```txt
 CLOUDFLARE_API_TOKEN
