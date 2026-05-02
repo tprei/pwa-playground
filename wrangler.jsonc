@@ -5,7 +5,8 @@
   "compatibility_date": "2026-05-02",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "html_handling": "none"
   },
   "routes": [
     { "pattern": "play.prschdt.xyz", "custom_domain": true }

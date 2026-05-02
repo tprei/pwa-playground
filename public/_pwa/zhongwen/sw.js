@@ -1,7 +1,15 @@
 const CACHE_PREFIX = "pwa-playground:zhongwen:";
 const CACHE_NAME = CACHE_PREFIX + "v1";
 const APP_SCOPE = "/zhongwen/";
-const SHELL_URLS = [APP_SCOPE, "/index.html", "/zhongwen/manifest.webmanifest", "/zhongwen/icon.svg"];
+const SHELL_URLS = [
+  APP_SCOPE,
+  "/index.html",
+  "/zhongwen/manifest.webmanifest",
+  "/zhongwen/icon.svg",
+  "/zhongwen/icon-192.png",
+  "/zhongwen/icon-512.png",
+  "/zhongwen/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_URLS)));

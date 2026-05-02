@@ -5,8 +5,13 @@ let activeSlug: string | null = null;
 export function configurePwaForSite(site: PlaygroundSite) {
   document.title = site.title;
   setMeta("description", site.description);
+  setMeta("mobile-web-app-capable", "yes");
+  setMeta("apple-mobile-web-app-capable", "yes");
+  setMeta("apple-mobile-web-app-title", site.title);
+  setMeta("apple-mobile-web-app-status-bar-style", "default");
   setThemeColor(site.themeColor);
   setIcon(site);
+  setAppleIcon(site);
   setManifest(site);
   void registerRouteWorker(site);
 }
@@ -38,6 +43,14 @@ function setIcon(site: PlaygroundSite) {
   const tag = existing ?? document.createElement("link");
   tag.rel = "icon";
   tag.href = `/${site.slug}/icon.svg`;
+  if (!existing) document.head.appendChild(tag);
+}
+
+function setAppleIcon(site: PlaygroundSite) {
+  const existing = document.head.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]');
+  const tag = existing ?? document.createElement("link");
+  tag.rel = "apple-touch-icon";
+  tag.href = `/${site.slug}/apple-touch-icon.png`;
   if (!existing) document.head.appendChild(tag);
 }
 

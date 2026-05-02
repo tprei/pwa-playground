@@ -1,7 +1,15 @@
 const CACHE_PREFIX = "pwa-playground:finance:";
 const CACHE_NAME = CACHE_PREFIX + "v1";
 const APP_SCOPE = "/finance/";
-const SHELL_URLS = [APP_SCOPE, "/index.html", "/finance/manifest.webmanifest", "/finance/icon.svg"];
+const SHELL_URLS = [
+  APP_SCOPE,
+  "/index.html",
+  "/finance/manifest.webmanifest",
+  "/finance/icon.svg",
+  "/finance/icon-192.png",
+  "/finance/icon-512.png",
+  "/finance/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_URLS)));
