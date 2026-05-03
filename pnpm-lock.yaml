@@ -14,6 +14,9 @@ importers:
       react-dom:
         specifier: ^19.2.3
         version: 19.2.5(react@19.2.5)
+      ts-fsrs:
+        specifier: ^5.3.2
+        version: 5.3.2
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260424.0
@@ -1084,6 +1087,10 @@ packages:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
 
+  ts-fsrs@5.3.2:
+    resolution: {integrity: sha512-moJJfYAeG9ynyyGCNaQPUloi0sspTMHFtgCvsx2wDchELu3O2c513/7fp+6PxsGth0ztxNjEtG8d85gX4ce0og==}
+    engines: {node: '>=20.0.0'}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -2071,6 +2078,8 @@ snapshots:
       picomatch: 4.0.4
 
   tree-kill@1.2.2: {}
+
+  ts-fsrs@5.3.2: {}
 
   tslib@2.8.1: {}
 
