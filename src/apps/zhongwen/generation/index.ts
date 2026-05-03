@@ -50,8 +50,8 @@ export interface GenerationDatabase {
   };
 }
 
-const TOKEN_KEY = "apiToken";
-const TOPICS_KEY = "topics";
+const TOKEN_KEY = "settings:apiToken";
+const TOPICS_KEY = "settings:preferredTopics";
 const DEFAULT_TOPICS = ["software/coding", "gym", "daily life"];
 
 const SENTENCE_MODEL = "anthropic/claude-haiku-4.5";

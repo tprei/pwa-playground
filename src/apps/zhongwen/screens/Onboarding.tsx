@@ -31,7 +31,11 @@ const CHOICES: readonly CalibrationChoice[] = [
   { id: "skip", label: "Skip" },
 ];
 
-export default function Onboarding({ site, storage }: PlaygroundAppProps) {
+interface OnboardingProps extends PlaygroundAppProps {
+  onComplete?: () => void;
+}
+
+export default function Onboarding({ site, storage, onComplete }: OnboardingProps) {
   const [step, setStep] = useState<Step>("calibrate");
   const [words, setWords] = useState<readonly string[] | null>(null);
   const [glosses, setGlosses] = useState<ReadonlyMap<string, CedictEntry> | null>(null);
@@ -58,6 +62,12 @@ export default function Onboarding({ site, storage }: PlaygroundAppProps) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (step === "finish" && onComplete) {
+      onComplete();
+    }
+  }, [step, onComplete]);
 
   const totalWords = words?.length ?? CALIBRATION_COUNT;
   const currentWord = words?.[index];
@@ -112,11 +122,11 @@ export default function Onboarding({ site, storage }: PlaygroundAppProps) {
 
   function commitSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    storage.set("settings.dailyTargetMinutes", String(dailyMinutes));
-    storage.set("settings.topics", JSON.stringify([...selectedTopics]));
-    storage.set("settings.translationLanguage", language);
-    storage.set("settings.apiToken", apiToken.trim());
-    storage.set("settings.firstLaunchDone", "true");
+    storage.set("settings:dailyTargetMinutes", String(dailyMinutes));
+    storage.set("settings:preferredTopics", JSON.stringify([...selectedTopics]));
+    storage.set("settings:translationLanguage", language);
+    storage.set("settings:apiToken", apiToken.trim());
+    storage.set("settings:firstLaunchDone", "true");
     setStep("finish");
   }
 
