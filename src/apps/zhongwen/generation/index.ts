@@ -1,10 +1,4 @@
 import type { SiteStorage } from "../../../platform/types";
-import type {
-  RadicalBreakdownRecord,
-  SentenceInputArgs,
-  SentenceRecord,
-  SiteDatabase,
-} from "../data";
 import type { Word } from "../model";
 import {
   RADICAL_SYSTEM_PROMPT,
@@ -12,6 +6,49 @@ import {
   buildRadicalUserMessage,
   buildSentenceUserMessage,
 } from "./prompts";
+
+export interface SentenceInputArgs {
+  targetWord: Word;
+  knownWords: Word[];
+  recentTopics: string[];
+  prefs: SentencePrefs;
+}
+
+export interface SentenceRecord {
+  id: string;
+  cacheKey: string;
+  targetWordId: string;
+  hanzi: string;
+  pinyin: string;
+  glossEN: string;
+  glossPT: string;
+  knownWordIds: string[];
+  topics: string[];
+  style: string;
+  inputArgs: SentenceInputArgs;
+  generatedAt: number;
+}
+
+export interface RadicalBreakdownRecord {
+  id: string;
+  cacheKey: string;
+  hanzi: string;
+  l1Hint: string;
+  components: { component: string; meaning: string }[];
+  mnemonic: string;
+  generatedAt: number;
+}
+
+export interface GenerationDatabase {
+  sentences: {
+    get(key: string): Promise<SentenceRecord | undefined>;
+    put(record: SentenceRecord): Promise<unknown>;
+  };
+  radicalBreakdowns: {
+    get(key: string): Promise<RadicalBreakdownRecord | undefined>;
+    put(record: RadicalBreakdownRecord): Promise<unknown>;
+  };
+}
 
 const TOKEN_KEY = "apiToken";
 const TOPICS_KEY = "topics";
@@ -37,12 +74,7 @@ export interface SentencePrefs {
   topics?: string[];
 }
 
-export interface GenerateSentenceArgs {
-  targetWord: Word;
-  knownWords: Word[];
-  recentTopics: string[];
-  prefs: SentencePrefs;
-}
+export type GenerateSentenceArgs = SentenceInputArgs;
 
 export interface GenerateRadicalArgs {
   hanzi: string;
@@ -52,7 +84,7 @@ export interface GenerateRadicalArgs {
 
 export interface GenerationDeps {
   storage: SiteStorage;
-  db: SiteDatabase;
+  db: GenerationDatabase;
 }
 
 export interface Generation {

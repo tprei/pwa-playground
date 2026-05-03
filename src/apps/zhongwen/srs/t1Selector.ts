@@ -1,5 +1,5 @@
-import { createSiteDatabase, type SiteDatabase } from "../../../platform/database";
-import type { PlaygroundSite } from "../../../platform/types";
+import { createSiteDatabase } from "../../../platform/database";
+import type { PlaygroundSite, SiteDatabase } from "../../../platform/types";
 import { loadFrequency, loadHsk, type FrequencyList, type HskEntry } from "../data";
 import {
   WORDS_STORE,
@@ -71,25 +71,25 @@ export function pickT1ContextWords(
   return [...seen];
 }
 
-const dbCache = new WeakMap<PlaygroundSite, Promise<SiteDatabase>>();
+const dbCache = new WeakMap<PlaygroundSite, SiteDatabase>();
 
-function openWordDb(site: PlaygroundSite): Promise<SiteDatabase> {
-  let pending = dbCache.get(site);
-  if (!pending) {
-    pending = createSiteDatabase(site, ZHONGWEN_DB_CONFIG);
-    dbCache.set(site, pending);
+function openWordDb(site: PlaygroundSite): SiteDatabase {
+  let db = dbCache.get(site);
+  if (!db) {
+    db = createSiteDatabase(site, ZHONGWEN_DB_CONFIG);
+    dbCache.set(site, db);
   }
-  return pending;
+  return db;
 }
 
 export async function loadWordGraph(site: PlaygroundSite): Promise<WordGraph> {
-  const db = await openWordDb(site);
+  const db = openWordDb(site);
   const entries = await db.getAll<WordEntry>(WORDS_STORE);
   return new Map(entries.map((entry) => [entry.hanzi, entry]));
 }
 
 export async function saveWordEntry(site: PlaygroundSite, entry: WordEntry): Promise<void> {
-  const db = await openWordDb(site);
+  const db = openWordDb(site);
   await db.put<WordEntry>(WORDS_STORE, entry);
 }
 
