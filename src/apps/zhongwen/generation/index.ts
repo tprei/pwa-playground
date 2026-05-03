@@ -1,10 +1,4 @@
 import type { SiteStorage } from "../../../platform/types";
-import type {
-  RadicalBreakdownRecord,
-  SentenceInputArgs,
-  SentenceRecord,
-  SiteDatabase,
-} from "../data";
 import type { Word } from "../model";
 import {
   RADICAL_SYSTEM_PROMPT,
@@ -13,12 +7,55 @@ import {
   buildSentenceUserMessage,
 } from "./prompts";
 
+export interface SentenceInputArgs {
+  targetWord: Word;
+  knownWords: Word[];
+  recentTopics: string[];
+  prefs: SentencePrefs;
+}
+
+export interface SentenceRecord {
+  id: string;
+  cacheKey: string;
+  targetWordId: string;
+  hanzi: string;
+  pinyin: string;
+  glossEN: string;
+  glossPT: string;
+  knownWordIds: string[];
+  topics: string[];
+  style: string;
+  inputArgs: SentenceInputArgs;
+  generatedAt: number;
+}
+
+export interface RadicalBreakdownRecord {
+  id: string;
+  cacheKey: string;
+  hanzi: string;
+  l1Hint: string;
+  components: { component: string; meaning: string }[];
+  mnemonic: string;
+  generatedAt: number;
+}
+
+export interface GenerationDatabase {
+  sentences: {
+    get(key: string): Promise<SentenceRecord | undefined>;
+    put(record: SentenceRecord): Promise<unknown>;
+  };
+  radicalBreakdowns: {
+    get(key: string): Promise<RadicalBreakdownRecord | undefined>;
+    put(record: RadicalBreakdownRecord): Promise<unknown>;
+  };
+}
+
 const TOKEN_KEY = "apiToken";
 const TOPICS_KEY = "topics";
 const DEFAULT_TOPICS = ["software/coding", "gym", "daily life"];
 
-const SENTENCE_MODEL = "claude-haiku-4-5-20251001";
-const RADICAL_MODEL = "claude-haiku-4-5-20251001";
+const SENTENCE_MODEL = "anthropic/claude-haiku-4.5";
+const RADICAL_MODEL = "anthropic/claude-haiku-4.5";
 const MAX_TOKENS = 512;
 
 export type GenerationErrorCode = "auth" | "rate" | "network" | "invalid";
@@ -37,12 +74,7 @@ export interface SentencePrefs {
   topics?: string[];
 }
 
-export interface GenerateSentenceArgs {
-  targetWord: Word;
-  knownWords: Word[];
-  recentTopics: string[];
-  prefs: SentencePrefs;
-}
+export type GenerateSentenceArgs = SentenceInputArgs;
 
 export interface GenerateRadicalArgs {
   hanzi: string;
@@ -52,7 +84,7 @@ export interface GenerateRadicalArgs {
 
 export interface GenerationDeps {
   storage: SiteStorage;
-  db: SiteDatabase;
+  db: GenerationDatabase;
 }
 
 export interface Generation {
@@ -226,14 +258,10 @@ async function callMessages(storage: SiteStorage, call: MessagesCall): Promise<s
       body: JSON.stringify({
         model: call.model,
         max_tokens: MAX_TOKENS,
-        system: [
-          {
-            type: "text",
-            text: call.system,
-            cache_control: { type: "ephemeral" },
-          },
+        messages: [
+          { role: "system", content: call.system },
+          { role: "user", content: call.user },
         ],
-        messages: [{ role: "user", content: call.user }],
       }),
     });
   } catch (cause) {
@@ -266,15 +294,12 @@ async function callMessages(storage: SiteStorage, call: MessagesCall): Promise<s
 
 function extractText(payload: unknown): string | null {
   if (!payload || typeof payload !== "object") return null;
-  const content = (payload as { content?: unknown }).content;
-  if (!Array.isArray(content)) return null;
-  for (const block of content) {
-    if (block && typeof block === "object" && (block as { type?: unknown }).type === "text") {
-      const text = (block as { text?: unknown }).text;
-      if (typeof text === "string") return text;
-    }
-  }
-  return null;
+  const choices = (payload as { choices?: unknown }).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+  const message = (choices[0] as { message?: unknown }).message;
+  if (!message || typeof message !== "object") return null;
+  const content = (message as { content?: unknown }).content;
+  return typeof content === "string" ? content : null;
 }
 
 function parseJson<T>(text: string): T {

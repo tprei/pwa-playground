@@ -1,4 +1,4 @@
-import type { SiteDatabaseConfig } from "../../platform/database";
+import type { SiteDatabaseMigration, SiteDatabaseSchema } from "../../platform/types";
 
 export type KnownState = "want-to-learn" | "learning" | "known" | "ignored";
 
@@ -15,12 +15,12 @@ export type WordGraph = ReadonlyMap<string, WordEntry>;
 
 export const WORDS_STORE = "words";
 
-export const ZHONGWEN_DB_CONFIG: SiteDatabaseConfig = {
+export const ZHONGWEN_DB_CONFIG: SiteDatabaseSchema = {
   version: 1,
-  stores: {
-    [WORDS_STORE]: {
-      keyPath: "hanzi",
-      indexes: [{ name: "byState", keyPath: "state" }],
-    },
+  migrate({ database, oldVersion }: SiteDatabaseMigration): void {
+    if (oldVersion < 1) {
+      const store = database.createObjectStore(WORDS_STORE, { keyPath: "hanzi" });
+      store.createIndex("byState", "state");
+    }
   },
 };
