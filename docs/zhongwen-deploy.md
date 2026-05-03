@@ -2,7 +2,7 @@
 
 The playground worker exposes two server-side proxy routes used by Zhongwen and any other app that needs LLM or TTS access without shipping API keys to the browser:
 
-- `POST /api/generate` — proxies to the Anthropic Messages API (`https://api.anthropic.com/v1/messages`). Non-streaming; returns the upstream JSON response unchanged.
+- `POST /api/generate` — proxies to the OpenRouter chat completions API (`https://openrouter.ai/api/v1/chat/completions`). Non-streaming; returns the upstream JSON response unchanged.
 - `POST /api/tts` — proxies to Google Cloud Text-to-Speech (`https://texttospeech.googleapis.com/v1/text:synthesize`). Decodes the upstream `audioContent` (base64) and returns raw audio bytes with `Content-Type: audio/mpeg`.
 
 Both routes require an `Authorization: Bearer <APP_TOKEN>` header. Mismatches return `401`.
@@ -13,14 +13,14 @@ Three secrets back the routes:
 
 | Secret | Used by | Source |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | `/api/generate` | Anthropic console |
+| `OPENROUTER_API_KEY` | `/api/generate` | OpenRouter dashboard |
 | `GOOGLE_TTS_API_KEY` | `/api/tts` | Google Cloud console (TTS-enabled API key) |
 | `APP_TOKEN` | both routes (auth gate) | Generate locally, e.g. `openssl rand -hex 32` |
 
 Set them on the deployed worker with `wrangler secret put`:
 
 ```bash
-wrangler secret put ANTHROPIC_API_KEY
+wrangler secret put OPENROUTER_API_KEY
 wrangler secret put GOOGLE_TTS_API_KEY
 wrangler secret put APP_TOKEN
 ```
@@ -42,7 +42,7 @@ This runs Vite (`:5177`) and `wrangler dev` (`:8787`) together via `concurrently
 For the local worker to reach the upstream APIs, provide local secret values via a `.dev.vars` file in the repo root (gitignored, never commit):
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
 GOOGLE_TTS_API_KEY=AIza...
 APP_TOKEN=dev-token
 ```
@@ -63,7 +63,7 @@ After deploy, smoke-test:
 curl -i -X POST https://play.prschdt.xyz/api/generate \
   -H "authorization: Bearer $APP_TOKEN" \
   -H "content-type: application/json" \
-  -d '{"model":"claude-haiku-4-5-20251001","max_tokens":32,"messages":[{"role":"user","content":"ping"}]}'
+  -d '{"model":"anthropic/claude-haiku-4.5","max_tokens":32,"messages":[{"role":"user","content":"ping"}]}'
 ```
 
 A missing or wrong bearer should yield `401`.

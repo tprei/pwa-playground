@@ -3,7 +3,7 @@ import type { SitesConfig } from "../platform/types";
 
 interface Env {
   ASSETS: Fetcher;
-  ANTHROPIC_API_KEY: string;
+  OPENROUTER_API_KEY: string;
   GOOGLE_TTS_API_KEY: string;
   APP_TOKEN: string;
 }
@@ -109,12 +109,11 @@ async function handleGenerate(request: Request, env: Env): Promise<Response> {
   if (denied) return denied;
 
   const body = await request.text();
-  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+  const upstream = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
+      authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
     },
     body,
   });
