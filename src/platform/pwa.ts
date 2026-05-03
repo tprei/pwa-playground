@@ -34,6 +34,7 @@ function setManifest(site: PlaygroundSite) {
   const existing = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
   const tag = existing ?? document.createElement("link");
   tag.rel = "manifest";
+  tag.crossOrigin = "use-credentials";
   tag.href = `/${site.slug}/manifest.webmanifest`;
   if (!existing) document.head.appendChild(tag);
 }
