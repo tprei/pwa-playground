@@ -19,7 +19,7 @@ export default function ZhongwenApp({ site }: PlaygroundAppProps) {
     return onboarded ? "library" : "onboarding";
   });
 
-  const scheduler = createSchedulerWith(site, storage, db);
+  const scheduler = createSchedulerWith(db, storage);
 
   return (
     <>
