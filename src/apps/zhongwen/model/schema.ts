@@ -1,14 +1,14 @@
 import type { SiteDatabaseMigration, SiteDatabaseSchema } from "../../../platform/types";
 
-export const ZHONGWEN_DB_VERSION = 1;
+export const ZHONGWEN_DB_VERSION = 2;
 
 export const tableNames = {
   words: "words",
-  cards: "cards",
   sentences: "sentences",
   radicalBreakdowns: "radicalBreakdowns",
-  reviews: "reviews",
   blobs: "blobs",
+  wordStates: "wordStates",
+  stories: "stories",
 } as const;
 
 export type ZhongwenTableName = (typeof tableNames)[keyof typeof tableNames];
@@ -38,16 +38,6 @@ export const tableSpecs: readonly TableSpec[] = [
     ],
   },
   {
-    name: tableNames.cards,
-    keyPath: "id",
-    indexes: [
-      { name: "wordId", keyPath: "wordId" },
-      { name: "mode", keyPath: "mode" },
-      { name: "wordId_mode", keyPath: ["wordId", "mode"], options: { unique: true } },
-      { name: "due", keyPath: "fsrs.due" },
-    ],
-  },
-  {
     name: tableNames.sentences,
     keyPath: "id",
     indexes: [
@@ -63,18 +53,26 @@ export const tableSpecs: readonly TableSpec[] = [
     indexes: [],
   },
   {
-    name: tableNames.reviews,
-    keyPath: "id",
-    indexes: [
-      { name: "cardId", keyPath: "cardId" },
-      { name: "reviewedAt", keyPath: "reviewedAt" },
-      { name: "cardId_reviewedAt", keyPath: ["cardId", "reviewedAt"] },
-    ],
-  },
-  {
     name: tableNames.blobs,
     keyPath: "hash",
     indexes: [{ name: "kind", keyPath: "kind" }],
+  },
+  {
+    name: tableNames.wordStates,
+    keyPath: "hanzi",
+    indexes: [
+      { name: "state", keyPath: "state" },
+      { name: "lastSeenAt", keyPath: "lastSeenAt" },
+    ],
+  },
+  {
+    name: tableNames.stories,
+    keyPath: "id",
+    indexes: [
+      { name: "status", keyPath: "status" },
+      { name: "createdAt", keyPath: "createdAt" },
+      { name: "readAt", keyPath: "readAt" },
+    ],
   },
 ];
 
@@ -88,11 +86,12 @@ function applyTableSpec(database: IDBDatabase, spec: TableSpec): void {
 
 export const zhongwenSchema: SiteDatabaseSchema = {
   version: ZHONGWEN_DB_VERSION,
-  migrate({ database, oldVersion }: SiteDatabaseMigration): void {
-    if (oldVersion < 1) {
-      for (const spec of tableSpecs) {
-        applyTableSpec(database, spec);
-      }
+  migrate({ database }: SiteDatabaseMigration): void {
+    for (const existing of Array.from(database.objectStoreNames)) {
+      database.deleteObjectStore(existing);
+    }
+    for (const spec of tableSpecs) {
+      applyTableSpec(database, spec);
     }
   },
 };

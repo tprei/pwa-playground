@@ -1,76 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSiteDatabase } from "../../../platform/database";
-import { createSiteStorage } from "../../../platform/storage";
-import type { PlaygroundSite, SiteDatabase, SiteStorage } from "../../../platform/types";
+import type { PlaygroundSite, SiteDatabase } from "../../../platform/types";
 import { zhongwenSchema } from "../model/schema";
 import {
-  deleteWord as deleteWordFromGraph,
-  loadThumbsUpSentences,
+  deleteWordState,
   selectLibraryEntries,
-  writeKnownState,
+  writeWordState,
   type LibraryEntry,
 } from "../model/selector";
-import type { KnownState, Sentence } from "../model/types";
-import { createSchedulerWith, type Scheduler } from "../srs/scheduler";
+import type { WordStateKind } from "../model/types";
 
 const PAGE_SIZE = 20;
-const SENTENCES_PER_WORD = 3;
 
-type FilterChip = "hsk-1" | "hsk-2" | "want-to-learn" | "learning" | "known";
+type FilterChip = "want-to-learn" | "learning" | "known" | "ignored";
 
 const CHIPS: readonly { id: FilterChip; label: string }[] = [
-  { id: "hsk-1", label: "HSK 1" },
-  { id: "hsk-2", label: "HSK 2" },
   { id: "want-to-learn", label: "Want to learn" },
   { id: "learning", label: "Learning" },
   { id: "known", label: "Known" },
+  { id: "ignored", label: "Ignored" },
 ];
 
-const STATE_LABEL: Record<KnownState, string> = {
+const STATE_LABEL: Record<WordStateKind, string> = {
   unknown: "Unknown",
   learning: "Learning",
   known: "Known",
   "want-to-learn": "Want to learn",
+  ignored: "Ignored",
 };
 
-const SELECTABLE_STATES: readonly KnownState[] = [
+const SELECTABLE_STATES: readonly WordStateKind[] = [
   "unknown",
   "want-to-learn",
   "learning",
   "known",
+  "ignored",
 ];
 
 export interface LibraryProps {
   site: PlaygroundSite;
-  scheduler?: Scheduler;
-  now?: () => number;
   confirm?: (message: string) => boolean;
 }
 
-export default function Library({
-  site,
-  scheduler: schedulerOverride,
-  now = Date.now,
-  confirm: confirmOverride,
-}: LibraryProps) {
+export default function Library({ site, confirm: confirmOverride }: LibraryProps) {
   const database = useMemo<SiteDatabase>(() => createSiteDatabase(site, zhongwenSchema), [site]);
-  const storage = useMemo<SiteStorage>(() => createSiteStorage(site), [site]);
-  const scheduler = useMemo<Scheduler>(
-    () => schedulerOverride ?? createSchedulerWith(database, storage),
-    [database, storage, schedulerOverride],
-  );
 
   const [entries, setEntries] = useState<LibraryEntry[] | null>(null);
   const [search, setSearch] = useState<string>("");
   const [chip, setChip] = useState<FilterChip | null>(null);
   const [page, setPage] = useState<number>(0);
-  const [busyWordId, setBusyWordId] = useState<string | null>(null);
+  const [busyHanzi, setBusyHanzi] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh(): Promise<void> {
     try {
-      const data = await selectLibraryEntries(database, storage);
-      data.sort((a, b) => b.word.addedAt - a.word.addedAt);
+      const data = await selectLibraryEntries(database);
+      data.sort((a, b) => b.addedAt - a.addedAt);
       setEntries(data);
     } catch (caught) {
       setError(messageOf(caught));
@@ -79,7 +64,7 @@ export default function Library({
 
   useEffect(() => {
     void refresh();
-  }, [database, storage]);
+  }, [database]);
 
   useEffect(() => {
     setPage(0);
@@ -89,17 +74,13 @@ export default function Library({
     if (!entries) return [];
     const needle = search.trim().toLowerCase();
     return entries.filter((entry) => {
-      if (chip === "hsk-1" && entry.word.hsk !== 1) return false;
-      if (chip === "hsk-2" && entry.word.hsk !== 2) return false;
-      if (chip === "want-to-learn" && entry.knownState !== "want-to-learn") return false;
-      if (chip === "learning" && entry.knownState !== "learning") return false;
-      if (chip === "known" && entry.knownState !== "known") return false;
+      if (chip && entry.state !== chip) return false;
       if (needle.length > 0) {
         const text = [
-          entry.word.hanzi,
-          entry.word.pinyin,
-          entry.word.glossEn ?? "",
-          entry.word.glossPt ?? "",
+          entry.hanzi,
+          entry.word?.pinyin ?? "",
+          entry.word?.glossEn ?? "",
+          entry.word?.glossPt ?? "",
         ]
           .join("\n")
           .toLowerCase();
@@ -116,9 +97,9 @@ export default function Library({
     [filtered, safePage],
   );
 
-  async function withBusy(wordId: string, action: () => Promise<void>): Promise<void> {
-    if (busyWordId) return;
-    setBusyWordId(wordId);
+  async function withBusy(hanzi: string, action: () => Promise<void>): Promise<void> {
+    if (busyHanzi) return;
+    setBusyHanzi(hanzi);
     setError(null);
     try {
       await action();
@@ -126,33 +107,21 @@ export default function Library({
     } catch (caught) {
       setError(messageOf(caught));
     } finally {
-      setBusyWordId(null);
+      setBusyHanzi(null);
     }
   }
 
-  function handleSuspend(wordId: string): void {
-    void withBusy(wordId, async () => {
-      await scheduler.suspendWord(wordId);
+  function handleStateChange(hanzi: string, state: WordStateKind): void {
+    void withBusy(hanzi, async () => {
+      await writeWordState(database, hanzi, state, Date.now());
     });
   }
 
-  function handleUnsuspend(wordId: string): void {
-    void withBusy(wordId, async () => {
-      await scheduler.unsuspendWord(wordId);
-    });
-  }
-
-  function handleStateChange(wordId: string, state: KnownState): void {
-    void withBusy(wordId, async () => {
-      writeKnownState(storage, wordId, state);
-    });
-  }
-
-  function handleDelete(wordId: string, hanzi: string): void {
+  function handleDelete(hanzi: string): void {
     const ask = confirmOverride ?? ((message: string) => window.confirm(message));
-    if (!ask(`Delete ${hanzi} and all its cards/sentences?`)) return;
-    void withBusy(wordId, async () => {
-      await deleteWordFromGraph(database, storage, wordId);
+    if (!ask(`Remove ${hanzi} from your library?`)) return;
+    void withBusy(hanzi, async () => {
+      await deleteWordState(database, hanzi);
     });
   }
 
@@ -192,22 +161,18 @@ export default function Library({
       {error ? <p className="library__hint library__hint--error">{error}</p> : null}
 
       {entries.length === 0 ? (
-        <p className="library__hint">No words yet — add your first word to get started.</p>
+        <p className="library__hint">No words yet — your library is empty.</p>
       ) : filtered.length === 0 ? (
         <p className="library__hint">No words match these filters.</p>
       ) : (
         <ul className="library__list">
           {pageEntries.map((entry) => (
             <LibraryRow
-              key={entry.word.id}
+              key={entry.hanzi}
               entry={entry}
-              database={database}
-              now={now}
-              busy={busyWordId === entry.word.id}
-              onSuspend={() => handleSuspend(entry.word.id)}
-              onUnsuspend={() => handleUnsuspend(entry.word.id)}
-              onStateChange={(state) => handleStateChange(entry.word.id, state)}
-              onDelete={() => handleDelete(entry.word.id, entry.word.hanzi)}
+              busy={busyHanzi === entry.hanzi}
+              onStateChange={(state) => handleStateChange(entry.hanzi, state)}
+              onDelete={() => handleDelete(entry.hanzi)}
             />
           ))}
         </ul>
@@ -242,80 +207,37 @@ export default function Library({
 
 interface LibraryRowProps {
   entry: LibraryEntry;
-  database: SiteDatabase;
-  now: () => number;
   busy: boolean;
-  onSuspend: () => void;
-  onUnsuspend: () => void;
-  onStateChange: (state: KnownState) => void;
+  onStateChange: (state: WordStateKind) => void;
   onDelete: () => void;
 }
 
-function LibraryRow({
-  entry,
-  database,
-  now,
-  busy,
-  onSuspend,
-  onUnsuspend,
-  onStateChange,
-  onDelete,
-}: LibraryRowProps) {
-  const [sentences, setSentences] = useState<Sentence[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadThumbsUpSentences(database, entry.word.id, SENTENCES_PER_WORD)
-      .then((loaded) => {
-        if (!cancelled) setSentences(loaded);
-      })
-      .catch(() => {
-        if (!cancelled) setSentences([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [database, entry.word.id]);
-
-  const dueLabel = formatDueLabel(entry.earliestDue, entry.suspended, now());
-
+function LibraryRow({ entry, busy, onStateChange, onDelete }: LibraryRowProps) {
   return (
     <li className="library__row">
       <div className="library__row-head">
         <div className="library__row-title">
-          <strong>{entry.word.hanzi}</strong>
-          <span>{entry.word.pinyin}</span>
-          {entry.word.glossEn ? <small>{entry.word.glossEn}</small> : null}
+          <strong>{entry.hanzi}</strong>
+          {entry.word?.pinyin ? <span>{entry.word.pinyin}</span> : null}
+          {entry.word?.glossEn ? <small>{entry.word.glossEn}</small> : null}
         </div>
         <div className="library__row-meta">
-          <span className={`library__state library__state--${entry.knownState}`}>
-            {STATE_LABEL[entry.knownState]}
+          <span className={`library__state library__state--${entry.state}`}>
+            {STATE_LABEL[entry.state]}
           </span>
-          {entry.word.hsk !== undefined ? (
+          {entry.word?.hsk !== undefined ? (
             <span className="library__tag">HSK {entry.word.hsk}</span>
           ) : null}
-          {dueLabel ? <span className="library__due">{dueLabel}</span> : null}
         </div>
       </div>
-
-      {sentences && sentences.length > 0 ? (
-        <ul className="library__sentences">
-          {sentences.map((sentence) => (
-            <li key={sentence.id} className="library__sentence">
-              <span>{sentence.hanzi}</span>
-              <small>{sentence.glossLineEn}</small>
-            </li>
-          ))}
-        </ul>
-      ) : null}
 
       <div className="library__actions">
         <label className="library__state-select">
           <span className="library__state-select-label">State</span>
           <select
-            value={entry.knownState}
+            value={entry.state}
             disabled={busy}
-            onChange={(event) => onStateChange(event.target.value as KnownState)}
+            onChange={(event) => onStateChange(event.target.value as WordStateKind)}
           >
             {SELECTABLE_STATES.map((state) => (
               <option key={state} value={state}>
@@ -324,25 +246,6 @@ function LibraryRow({
             ))}
           </select>
         </label>
-        {entry.suspended ? (
-          <button
-            type="button"
-            className="library__action"
-            disabled={busy || entry.cards.length === 0}
-            onClick={onUnsuspend}
-          >
-            Unsuspend
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="library__action"
-            disabled={busy || entry.cards.length === 0}
-            onClick={onSuspend}
-          >
-            Suspend
-          </button>
-        )}
         <button
           type="button"
           className="library__action library__action--danger"
@@ -354,17 +257,6 @@ function LibraryRow({
       </div>
     </li>
   );
-}
-
-const DAY_MS = 86_400_000;
-
-function formatDueLabel(due: number | undefined, suspended: boolean, currentTime: number): string | null {
-  if (suspended) return "Suspended";
-  if (due === undefined) return null;
-  const diffDays = Math.round((due - currentTime) / DAY_MS);
-  if (diffDays <= 0) return "Due now";
-  if (diffDays === 1) return "Due tomorrow";
-  return `Due in ${diffDays} days`;
 }
 
 function messageOf(error: unknown): string {
