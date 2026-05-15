@@ -20,37 +20,46 @@ export interface WordEntry {
   wantedReason?: string;
 }
 
-export type CardMode = "reading" | "listening" | "writing-strokes";
+export type WordStateKind =
+  | "unknown"
+  | "want-to-learn"
+  | "learning"
+  | "known"
+  | "ignored";
 
-export type FsrsState = "new" | "learning" | "review" | "relearning";
-
-export interface FsrsCardState {
-  state: FsrsState;
-  due: number;
-  stability: number;
-  difficulty: number;
-  elapsedDays: number;
-  scheduledDays: number;
-  reps: number;
-  lapses: number;
-  lastReview?: number;
+export interface WordState {
+  hanzi: string;
+  state: WordStateKind;
+  addedAt: number;
+  updatedAt: number;
+  lastSeenAt: number;
 }
 
-export interface Card {
-  id: string;
-  wordId: string;
-  mode: CardMode;
-  fsrs: FsrsCardState;
-  suspended: boolean;
+export type StoryStatus = "draft" | "ready" | "read";
+
+export interface StoryToken {
+  hanzi: string;
+  pinyin?: string;
+  gloss?: string;
+  state?: WordStateKind;
 }
 
-export type ReviewGrade = "again" | "hard" | "good" | "easy";
-
-export interface Review {
+export interface StorySentence {
   id: string;
-  cardId: string;
-  grade: ReviewGrade;
-  reviewedAt: number;
+  tokens: StoryToken[];
+  glossEn?: string;
+  glossPt?: string;
+  audioBlobId?: string;
+}
+
+export interface Story {
+  id: string;
+  title?: string;
+  status: StoryStatus;
+  sentences: StorySentence[];
+  topics: string[];
+  createdAt: number;
+  readAt?: number;
 }
 
 export interface Sentence {

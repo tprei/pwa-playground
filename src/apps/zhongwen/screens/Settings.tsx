@@ -29,8 +29,6 @@ type TtsVoice = (typeof TTS_VOICES)[number]["value"];
 const STORAGE_KEYS = {
   apiToken: "settings:apiToken",
   dailyTargetMinutes: "settings:dailyTargetMinutes",
-  dailyNewCardCap: "settings:dailyNewCardCap",
-  dailyReviewCap: "settings:dailyReviewCap",
   preferredTopics: "settings:preferredTopics",
   translationLanguage: "settings:translationLanguage",
   ttsVoice: "settings:ttsVoice",
@@ -42,8 +40,6 @@ const APP_DATA_KEYS = ["streak"] as const;
 const DEFAULTS = {
   apiToken: "",
   dailyTargetMinutes: 20,
-  dailyNewCardCap: 10,
-  dailyReviewCap: 200,
   preferredTopics: [] as string[],
   translationLanguage: "both" as TranslationLanguage,
   ttsVoice: "cmn-CN-Neural2-A" as TtsVoice,
@@ -53,8 +49,6 @@ const DEFAULTS = {
 interface SettingsState {
   apiToken: string;
   dailyTargetMinutes: number;
-  dailyNewCardCap: number;
-  dailyReviewCap: number;
   preferredTopics: string[];
   translationLanguage: TranslationLanguage;
   ttsVoice: TtsVoice;
@@ -105,14 +99,6 @@ function loadSettings(storage: SiteStorage): SettingsState {
       storage.get(STORAGE_KEYS.dailyTargetMinutes),
       DEFAULTS.dailyTargetMinutes,
     ),
-    dailyNewCardCap: readNonNegativeInt(
-      storage.get(STORAGE_KEYS.dailyNewCardCap),
-      DEFAULTS.dailyNewCardCap,
-    ),
-    dailyReviewCap: readNonNegativeInt(
-      storage.get(STORAGE_KEYS.dailyReviewCap),
-      DEFAULTS.dailyReviewCap,
-    ),
     preferredTopics: readTopics(storage.get(STORAGE_KEYS.preferredTopics)),
     translationLanguage: readTranslation(storage.get(STORAGE_KEYS.translationLanguage)),
     ttsVoice: readVoice(storage.get(STORAGE_KEYS.ttsVoice)),
@@ -155,7 +141,7 @@ export default function Settings({ site, storage }: SettingsScreenProps) {
     storage.set(STORAGE_KEYS[key], serialized);
   }
 
-  function setNumeric(key: "dailyTargetMinutes" | "dailyNewCardCap" | "dailyReviewCap", raw: string) {
+  function setNumeric(key: "dailyTargetMinutes", raw: string) {
     const parsed = Number.parseInt(raw, 10);
     const value = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
     persist(key, value, String(value));
@@ -231,7 +217,7 @@ export default function Settings({ site, storage }: SettingsScreenProps) {
       </section>
 
       <section className="settings__section">
-        <h2>Daily limits</h2>
+        <h2>Daily target</h2>
         <label className="settings__field">
           <span>Target study minutes</span>
           <input
@@ -240,26 +226,6 @@ export default function Settings({ site, storage }: SettingsScreenProps) {
             min={0}
             value={settings.dailyTargetMinutes}
             onChange={(event) => setNumeric("dailyTargetMinutes", event.target.value)}
-          />
-        </label>
-        <label className="settings__field">
-          <span>New cards per day</span>
-          <input
-            className="settings__input"
-            type="number"
-            min={0}
-            value={settings.dailyNewCardCap}
-            onChange={(event) => setNumeric("dailyNewCardCap", event.target.value)}
-          />
-        </label>
-        <label className="settings__field">
-          <span>Reviews per day</span>
-          <input
-            className="settings__input"
-            type="number"
-            min={0}
-            value={settings.dailyReviewCap}
-            onChange={(event) => setNumeric("dailyReviewCap", event.target.value)}
           />
         </label>
       </section>
@@ -360,8 +326,8 @@ export default function Settings({ site, storage }: SettingsScreenProps) {
       <section className="settings__section settings__section--danger">
         <h2>Reset all data</h2>
         <p className="settings__hint">
-          Wipes every word, card, sentence, blob, review, and saved preference for this app on
-          this device. This cannot be undone.
+          Wipes every word, sentence, story, blob, and saved preference for this app on this
+          device. This cannot be undone.
         </p>
         {resetStage === "idle" && (
           <button
