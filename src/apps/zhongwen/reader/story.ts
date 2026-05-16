@@ -1,0 +1,91 @@
+import type { ReaderStory } from "./types";
+
+export const HSK1_STARTER_STORY: ReaderStory = {
+  id: "starter-hsk1-meeting-friend",
+  title: "新朋友",
+  description: "A short HSK1 starter — meeting a new friend at school.",
+  hskLevel: 1,
+  sentences: [
+    {
+      id: "s1",
+      hanzi: "你好，我是学生。",
+      glossEn: "Hello, I am a student.",
+      tokens: [
+        { hanzi: "你好", pinyin: "nǐ hǎo", tones: [3, 3], glossEn: "hello" },
+        { hanzi: "，" },
+        { hanzi: "我", pinyin: "wǒ", tones: [3], glossEn: "I, me" },
+        { hanzi: "是", pinyin: "shì", tones: [4], glossEn: "to be; is" },
+        { hanzi: "学生", pinyin: "xué sheng", tones: [2, 1], glossEn: "student" },
+        { hanzi: "。" },
+      ],
+    },
+    {
+      id: "s2",
+      hanzi: "我的朋友是老师。",
+      glossEn: "My friend is a teacher.",
+      tokens: [
+        { hanzi: "我", pinyin: "wǒ", tones: [3], glossEn: "I, me" },
+        { hanzi: "的", pinyin: "de", tones: [5], glossEn: "(possessive particle)" },
+        { hanzi: "朋友", pinyin: "péng you", tones: [2, 5], glossEn: "friend" },
+        { hanzi: "是", pinyin: "shì", tones: [4], glossEn: "to be; is" },
+        { hanzi: "老师", pinyin: "lǎo shī", tones: [3, 1], glossEn: "teacher" },
+        { hanzi: "。" },
+      ],
+    },
+    {
+      id: "s3",
+      hanzi: "我们都在学校。",
+      glossEn: "We are all at school.",
+      tokens: [
+        { hanzi: "我们", pinyin: "wǒ men", tones: [3, 5], glossEn: "we, us" },
+        { hanzi: "都", pinyin: "dōu", tones: [1], glossEn: "all, both" },
+        { hanzi: "在", pinyin: "zài", tones: [4], glossEn: "at, in" },
+        { hanzi: "学校", pinyin: "xué xiào", tones: [2, 4], glossEn: "school" },
+        { hanzi: "。" },
+      ],
+    },
+    {
+      id: "s4",
+      hanzi: "今天早上我去学校。",
+      glossEn: "This morning I go to school.",
+      tokens: [
+        { hanzi: "今天", pinyin: "jīn tiān", tones: [1, 1], glossEn: "today" },
+        { hanzi: "早上", pinyin: "zǎo shang", tones: [3, 5], glossEn: "morning" },
+        { hanzi: "我", pinyin: "wǒ", tones: [3], glossEn: "I, me" },
+        { hanzi: "去", pinyin: "qù", tones: [4], glossEn: "to go" },
+        { hanzi: "学校", pinyin: "xué xiào", tones: [2, 4], glossEn: "school" },
+        { hanzi: "。" },
+      ],
+    },
+    {
+      id: "s5",
+      hanzi: "老师说：你们都是好朋友。",
+      glossEn: "The teacher said: you are all good friends.",
+      tokens: [
+        { hanzi: "老师", pinyin: "lǎo shī", tones: [3, 1], glossEn: "teacher" },
+        { hanzi: "说", pinyin: "shuō", tones: [1], glossEn: "to say, to speak" },
+        { hanzi: "：" },
+        { hanzi: "你们", pinyin: "nǐ men", tones: [3, 5], glossEn: "you (plural)" },
+        { hanzi: "都", pinyin: "dōu", tones: [1], glossEn: "all, both" },
+        { hanzi: "是", pinyin: "shì", tones: [4], glossEn: "to be; is" },
+        { hanzi: "好", pinyin: "hǎo", tones: [3], glossEn: "good" },
+        { hanzi: "朋友", pinyin: "péng you", tones: [2, 5], glossEn: "friend" },
+        { hanzi: "。" },
+      ],
+    },
+    {
+      id: "s6",
+      hanzi: "明天我也去学校学习。",
+      glossEn: "Tomorrow I also go to school to study.",
+      tokens: [
+        { hanzi: "明天", pinyin: "míng tiān", tones: [2, 1], glossEn: "tomorrow" },
+        { hanzi: "我", pinyin: "wǒ", tones: [3], glossEn: "I, me" },
+        { hanzi: "也", pinyin: "yě", tones: [3], glossEn: "also, too" },
+        { hanzi: "去", pinyin: "qù", tones: [4], glossEn: "to go" },
+        { hanzi: "学校", pinyin: "xué xiào", tones: [2, 4], glossEn: "school" },
+        { hanzi: "学习", pinyin: "xué xí", tones: [2, 2], glossEn: "to study, learning" },
+        { hanzi: "。" },
+      ],
+    },
+  ],
+};
