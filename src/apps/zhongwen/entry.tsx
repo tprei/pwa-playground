@@ -1,33 +1,32 @@
 import { useState } from "react";
-import { createSiteDatabase } from "../../platform/database";
-import { createSiteStorage } from "../../platform/storage";
 import type { PlaygroundAppProps } from "../../platform/types";
-import { zhongwenSchema } from "./model/schema";
-import { createSchedulerWith } from "./srs/scheduler";
-import Library from "./screens/Library";
+import Reader from "./reader/Reader";
 import Onboarding from "./screens/Onboarding";
 
-type Screen = "onboarding" | "library";
+type Screen = "onboarding" | "reader";
 
 const ONBOARDING_FLAG = "settings:firstLaunchDone";
 
-export default function ZhongwenApp({ site }: PlaygroundAppProps) {
-  const storage = createSiteStorage(site);
-  const db = createSiteDatabase(site, zhongwenSchema);
+export default function ZhongwenApp({ site, storage }: PlaygroundAppProps) {
   const [screen, setScreen] = useState<Screen>(() => {
     const onboarded = storage.get(ONBOARDING_FLAG) === "true";
-    return onboarded ? "library" : "onboarding";
+    return onboarded ? "reader" : "onboarding";
   });
-
-  const scheduler = createSchedulerWith(db, storage);
 
   return (
     <>
       {screen === "onboarding" && (
-        <Onboarding site={site} storage={storage} onComplete={() => setScreen("library")} />
+        <Onboarding
+          site={site}
+          storage={storage}
+          onComplete={() => setScreen("reader")}
+        />
       )}
-      {screen === "library" && (
-        <Library site={site} scheduler={scheduler} confirm={confirm} />
+      {screen === "reader" && (
+        <Reader
+          site={site}
+          storage={storage}
+        />
       )}
     </>
   );
